@@ -9,6 +9,9 @@
   <meta name="theme-color" content="#1976d2" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
 
+  <!-- ★追加：国土地理院（GSI）市区町村コード変換用 -->
+  <script src="https://maps.gsi.go.jp/js/muni.js"></script>
+
   <style>
     body {
       font-family: system-ui, -apple-system, sans-serif;
@@ -23,9 +26,10 @@
       margin-bottom: 12px;
     }
     label {
-      font-size: 14px;
+      font-size: 16px;
       margin-top: 8px;
       display: block;
+      font-weight: 600;
     }
     button, select, input, textarea {
       width: 100%;
@@ -72,6 +76,126 @@
     .checkRow span{
       font-size: 14px;
     }
+
+    /* 走行距離 A・B 横並び */
+    .odoRow {
+      display: flex;
+      gap: 12px;
+    }
+
+    .odoCol {
+      flex: 1;
+    }
+
+    /* 開始・終了ボタン 4つ横並び */
+    .timeRowAll {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-top: 6px;
+      flex-wrap: wrap; /* 画面狭い時は折り返し */
+    }
+
+    /* 取得ボタン（大きめ） */
+    .timeRowAll button:not(.btnSmall) {
+      flex: 1;
+      min-width: 120px;
+    }
+
+    /* クリアボタン（小さめ） */
+    .btnSmall {
+      width: auto;
+      padding: 8px 10px;
+      font-size: 13px;
+      flex: 0 0 auto;
+    }
+
+    /* セクション区切り線 */
+    .sectionDivider {
+      margin: 20px 0 16px;
+      border: none;
+      border-top: 2px solid #ccc;
+    }
+
+    /* 取得系ボタン（開始・終了・現在地）を薄緑に */
+    #startBtn,
+    #endBtn,
+    #locBtn {
+      background-color: #e6f4ea;
+      border: 1px solid #b7dfc5;
+      color: #1b5e20;
+    }
+
+    #startBtn:hover,
+    #endBtn:hover,
+    #locBtn:hover {
+      background-color: #d8efdf;
+    }
+
+    /* 登録ボタン（主役） */
+    #addBtn {
+      background-color: #2e7d32;
+      color: #fff;
+      font-weight: 700;
+      font-size: 17px;
+      padding: 14px;
+      border: none;
+      border-radius: 10px;
+      box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+    }
+
+    #addBtn:hover { background-color: #256628; }
+
+    #addBtn:active {
+      background-color: #1b5e20;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+      transform: translateY(1px);
+    }
+
+    /* ===== バックアップ・復元セクション（控えめ表示） ===== */
+    .backupCard { padding: 12px; }
+    .backupCard label {
+      font-size: 13px;
+      font-weight: 600;
+      color: #555;
+    }
+    .backupCard button {
+      font-size: 14px;
+      padding: 8px 10px;
+    }
+    .backupCard input[type="file"] {
+      font-size: 13px;
+      padding: 6px;
+    }
+
+    /* 管理メニュー（プルダウン） */
+    .dangerMenu { margin-top: 10px; }
+    .dangerMenu summary {
+      cursor: pointer;
+      font-size: 13px;
+      color: #555;
+      user-select: none;
+    }
+
+    .btnDangerSmall {
+      width: auto;
+      margin-top: 8px;
+      padding: 8px 10px;
+      font-size: 13px;
+      background: #fdecea;
+      border: 1px solid #f5c2c0;
+      color: #b42318;
+      border-radius: 8px;
+    }
+
+    .btnDangerSmall:hover { background: #fbd5d1; }
+    .btnDangerSmall:active { transform: translateY(1px); }
+
+    .dangerNote {
+      margin-top: 6px;
+      font-size: 12px;
+      color: #777;
+    }
   </style>
 </head>
 
@@ -83,7 +207,6 @@
     <label>日付</label>
     <input type="date" id="date" />
 
-    <!-- ★追加：日々チェック（ここが「日付」と「走行距離」の間） -->
     <label>日々チェック</label>
 
     <div class="checkRow">
@@ -98,17 +221,23 @@
 
     <label>走行距離（メーター）</label>
 
-    <label>A：出勤時のメーター（km）</label>
-    <input type="number" id="odoA" inputmode="decimal" placeholder="例：12345">
+    <div class="odoRow">
+      <div class="odoCol">
+        <label>A：出勤時のメーター（km）</label>
+        <input type="number" id="odoA" inputmode="decimal" placeholder="例：12345">
+      </div>
 
-    <label>B：退勤時のメーター（km）</label>
-    <input type="number" id="odoB" inputmode="decimal" placeholder="例：12410">
+      <div class="odoCol">
+        <label>B：退勤時のメーター（km）</label>
+        <input type="number" id="odoB" inputmode="decimal" placeholder="例：12410">
+      </div>
+    </div>
 
     <label>C：本日の走行距離（km）</label>
     <input type="text" id="odoC" readonly placeholder="AとBを入れると自動計算（B-A）">
+    <hr class="sectionDivider">
 
-    <!-- ステータス -->
-    <label>ステータス</label>
+    <label>ステータス（プルダウンから選択）</label>
     <select id="status">
       <option value="">未選択</option>
       <option value="出勤">出勤</option>
@@ -119,13 +248,16 @@
       <option value="休憩">休憩</option>
     </select>
 
-    <button id="startBtn" type="button">開始時刻を取得</button>
-    <div id="startTime" class="value"></div>
-    <button id="startClearBtn" type="button">開始時刻をクリア</button>
+    <div class="timeRowAll">
+      <button id="startBtn" type="button">開始時刻を取得</button>
+      <button id="startClearBtn" type="button" class="btnSmall">開始クリア</button>
 
-    <button id="endBtn" type="button">終了時刻を取得</button>
+      <button id="endBtn" type="button">終了時刻を取得</button>
+      <button id="endClearBtn" type="button" class="btnSmall">終了クリア</button>
+    </div>
+
+    <div id="startTime" class="value"></div>
     <div id="endTime" class="value"></div>
-    <button id="endClearBtn" type="button">終了時刻をクリア</button>
 
     <button id="locBtn" type="button">現在地を取得</button>
     <div id="location" class="value"></div>
@@ -135,14 +267,10 @@
 
     <button id="addBtn" type="button">登録</button>
 
+    <!-- ★復活：CSV出力（JSが落ちる原因だった） -->
     <button id="exportCsvBtn" type="button">この日のCSVを出力</button>
-    <button id="exportJsonBtn" type="button">全データをJSONで出力（バックアップ）</button>
 
-    <hr style="margin:12px 0; border:none; border-top:1px solid #ddd;">
-
-    <label>JSONバックアップから復元</label>
-    <input type="file" id="importJsonFile" accept="application/json,.json">
-    <button id="importJsonBtn" type="button">JSONを読み込んで復元（上書き）</button>
+    <hr class="sectionDivider">
   </div>
 
   <!-- 一覧 -->
@@ -162,6 +290,33 @@
       </thead>
       <tbody id="list"></tbody>
     </table>
+  </div>
+
+  <!-- ===== 全データのバックアップと復元 ===== -->
+  <div class="card backupCard">
+    <label>全データのバックアップと復元</label>
+
+    <button id="exportJsonBtn" type="button">
+      全データをJSONで出力（バックアップ）
+    </button>
+
+    <label style="margin-top:12px;">JSONバックアップから復元</label>
+    <input type="file" id="importJsonFile" accept="application/json,.json">
+    <button id="importJsonBtn" type="button">
+      JSONを読み込んで復元（上書き）
+    </button>
+
+    <details class="dangerMenu">
+      <summary>管理メニュー</summary>
+
+      <button id="clearAllBtn" type="button" class="btnDangerSmall">
+        端末内の全データを一括削除
+      </button>
+
+      <div class="dangerNote">
+        ※日報・走行距離・日々チェックをすべて削除します（元に戻せません）
+      </div>
+    </details>
   </div>
 
   <script>
@@ -270,7 +425,7 @@
       document.getElementById('odoC').value = calcDistance(a, b);
     }
 
-    // ===== ★追加：日々チェック保存 =====
+    // ===== 日々チェック保存 =====
     const CHECKS_KEY = 'nippoDailyChecksV1';
 
     function loadChecksAll() {
@@ -328,7 +483,6 @@
       const rowsRaw = all[dateKey] || [];
       const rows = rowsRaw.map(normalizeRecord);
 
-      // 正規化して保存し直す（旧データ混在でも安定）
       if (rowsRaw.length > 0) {
         all[dateKey] = rows;
         saveAll(all);
@@ -383,11 +537,10 @@
           saveBtn.addEventListener('click', () => {
             const newStart = startInput.value.trim();
             const newEnd = endInput.value.trim();
-            const newLoc = locInput.value.trim();   // 空OK
-            const newStatus = statusSelect.value;    // 未選択=空
+            const newLoc = locInput.value.trim();
+            const newStatus = statusSelect.value;
             const newMemo = memoInput.value;
 
-            // 時刻は「入ってるなら形式チェック」、空はOK
             if (newStart && !isValidDateTimeText(newStart)) {
               alert('開始の形式が違うよ。例：2025/12/30 09:05');
               return;
@@ -403,7 +556,7 @@
 
             rows2[idx].start = newStart;
             rows2[idx].end = newEnd;
-            rows2[idx].location = newLoc;    // 空OK
+            rows2[idx].location = newLoc;
             rows2[idx].status = newStatus;
             rows2[idx].memo = String(newMemo ?? '');
 
@@ -476,7 +629,7 @@
       });
     }
 
-    // ===== CSV/JSON 出力 =====
+    // ===== CSV/JSON 共通 =====
     function escapeCsvCell(value) {
       const s = String(value ?? '');
       if (/[,"\n\r]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
@@ -537,7 +690,6 @@
       loadOdoForDate(dateKey);
       loadChecksForDate(dateKey);
 
-      // 日付切替で開始/終了はクリア
       clearTimes();
     }
 
@@ -547,7 +699,7 @@
     document.getElementById('odoA').addEventListener('input', () => saveOdoForDate(getSelectedDateKey()));
     document.getElementById('odoB').addEventListener('input', () => saveOdoForDate(getSelectedDateKey()));
 
-    // ★日々チェック：変更のたびに保存（勝手に外れない＝自動処理はしない）
+    // 日々チェック：変更のたびに保存
     document.getElementById('chkCarDaily').addEventListener('change', () => saveChecksForDate(getSelectedDateKey()));
     document.getElementById('chkAlcohol').addEventListener('change', () => saveChecksForDate(getSelectedDateKey()));
 
@@ -567,7 +719,7 @@
       document.getElementById('endTime').textContent = '';
     };
 
-    // 現在地取得（Nominatim）
+    // ===== 現在地取得（GSI優先 → Nominatimフォールバック） =====
     document.getElementById('locBtn').onclick = () => {
       const locEl = document.getElementById('location');
       locEl.textContent = '位置情報を取得中…';
@@ -582,36 +734,67 @@
           const lat = pos.coords.latitude;
           const lon = pos.coords.longitude;
 
-          locEl.textContent = `緯度経度取得OK（${lat.toFixed(6)}, ${lon.toFixed(6)}）→ 住所変換中…`;
-
+          // ① GSI（国土地理院）優先
           try {
-            const url =
-              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=10&addressdetails=1`;
+            const gsiUrl = `https://mreversegeocoder.gsi.go.jp/reverse-geocoder/LonLatToAddress?lat=${lat}&lon=${lon}`;
+            const gsiRes = await fetch(gsiUrl);
 
-            const res = await fetch(url);
+            if (gsiRes.ok) {
+              const gsi = await gsiRes.json();
+              const muniCd = gsi?.results?.muniCd;
+              const lv01Nm = gsi?.results?.lv01Nm || '';
+
+              if (muniCd && window.GSI && GSI.MUNI_ARRAY) {
+                const key = String(muniCd).replace(/^0+/, '');
+                const row = GSI.MUNI_ARRAY[key];
+
+                if (row) {
+                  const parts = row.split(',');
+                  const prefName = parts[1] || '';
+                  const cityName = parts[3] || '';
+
+                  const place = [prefName, cityName].filter(Boolean).join(' ');
+                  locEl.textContent = place || '住所を取得できませんでした（GSI: データ不足）';
+                  return;
+                }
+              }
+            }
+          } catch (e) {
+            // 次へ（Nominatim）
+          }
+
+          // ② Nominatim（フォールバック）
+          try {
+            locEl.textContent = `緯度経度取得OK（${lat.toFixed(6)}, ${lon.toFixed(6)}）→ 住所変換中…`;
+
+            const nominatimUrl =
+              `https://nominatim.openstreetmap.org/reverse?` +
+              `format=jsonv2&lat=${lat}&lon=${lon}&zoom=14&addressdetails=1&accept-language=ja`;
+
+            const res = await fetch(nominatimUrl, { headers: { 'Accept-Language': 'ja' } });
+
             if (!res.ok) {
-              locEl.textContent = `住所変換に失敗（HTTP ${res.status}）`;
+              locEl.textContent = `住所変換に失敗（Nominatim HTTP ${res.status}）`;
               return;
             }
 
             const data = await res.json();
             const addr = data.address || {};
-            const prefecture = addr.state || '';
+
+            const prefecture =
+              addr.province || addr.state || addr.region || addr.state_district || '';
 
             const city =
-              addr.city ||
-              addr.municipality ||
-              addr.town ||
-              addr.village ||
-              addr.county ||
-              addr.suburb ||
-              '';
+              addr.city || addr.municipality || addr.town || addr.village ||
+              addr.city_district || addr.county || addr.suburb || '';
 
-            locEl.textContent =
-              prefecture && city
-                ? `${prefecture} ${city}`
-                : '住所を取得できませんでした（データ不足）';
+            if (prefecture || city) {
+              locEl.textContent = [prefecture, city].filter(Boolean).join(' ');
+              return;
+            }
 
+            const dn = (data.display_name || '').split(',').slice(0, 3).join(',').trim();
+            locEl.textContent = dn ? dn : '住所を取得できませんでした（Nominatim: データ不足）';
           } catch (e) {
             locEl.textContent = `住所変換に失敗しました（${e?.message || e}）`;
           }
@@ -625,7 +808,7 @@
           document.getElementById('location').textContent =
             `位置情報の取得ができませんでした：${codeMap[err.code] || '不明'} / ${err.message}`;
         },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
       );
     };
 
@@ -666,90 +849,104 @@
       clearTimes();
     };
 
-    // CSV（日ごと）：走行距離＆チェックを先頭に入れて、次に明細
-    document.getElementById('exportCsvBtn').onclick = () => {
-      const dateKey = getSelectedDateKey();
+    // ===== CSV出力（存在チェック付き）=====
+    const exportCsvBtn = document.getElementById('exportCsvBtn');
+    if (exportCsvBtn) {
+      exportCsvBtn.onclick = () => {
+        const dateKey = getSelectedDateKey();
 
-      const all = loadAll();
-      const rows = (all[dateKey] || []).map(normalizeRecord);
+        const all = loadAll();
+        const rows = (all[dateKey] || []).map(normalizeRecord);
 
-      const odoAll = loadOdoAll();
-      const odo = odoAll[dateKey] || { a: '', b: '' };
-      const odoC = calcDistance(String(odo.a ?? ''), String(odo.b ?? ''));
+        const odoAll = loadOdoAll();
+        const odo = odoAll[dateKey] || { a: '', b: '' };
+        const odoC = calcDistance(String(odo.a ?? ''), String(odo.b ?? ''));
 
-      const checksAll = loadChecksAll();
-      const checks = checksAll[dateKey] || { carDaily: false, alcohol: false };
+        const checksAll = loadChecksAll();
+        const checks = checksAll[dateKey] || { carDaily: false, alcohol: false };
 
-      if (rows.length === 0 && (String(odo.a ?? '') === '' && String(odo.b ?? '') === '') && !checks.carDaily && !checks.alcohol) {
-        alert('この日の記録がありません（走行距離・チェックも未入力）');
-        return;
-      }
-
-      const metaLines = [
-        ['日付', dateKey],
-        ['走行距離A（出勤メーターkm）', odo.a ?? ''],
-        ['走行距離B（退勤メーターkm）', odo.b ?? ''],
-        ['走行距離C（本日の走行距離km）', odoC],
-        ['社用車の日次点検を実施済', checks.carDaily ? '1' : '0'],
-        ['アルコールチェックを実施済', checks.alcohol ? '1' : '0'],
-        [], // 空行
-      ].map(cols => (cols.length ? cols.map(escapeCsvCell).join(',') : ''));
-
-      const header = ['開始', '終了', '場所', '状態', 'メモ'];
-      const lines = [header.map(escapeCsvCell).join(',')];
-
-      for (const r of rows) {
-        lines.push([r.start, r.end, r.location, r.status, r.memo].map(escapeCsvCell).join(','));
-      }
-
-      const csvText = metaLines.join('\n') + '\n' + lines.join('\n');
-      downloadText(`nippo_${dateKey.replaceAll('-', '')}.csv`, csvText, 'text/csv', true);
-    };
-
-    // JSON出力（全データ）
-    document.getElementById('exportJsonBtn').onclick = () => {
-      const all = loadAll();
-      if (!all || Object.keys(all).length === 0) {
-        alert('保存されているデータがありません');
-        return;
-      }
-      const stamp = new Date().toISOString().slice(0, 19).replace(/[-:T]/g, '');
-      downloadText(`nippo_backup_${stamp}.json`, JSON.stringify(all, null, 2), 'application/json', false);
-    };
-
-    // 復元（JSON上書き）
-    document.getElementById('importJsonBtn').onclick = async () => {
-      const fileInput = document.getElementById('importJsonFile');
-      const file = fileInput.files && fileInput.files[0];
-
-      if (!file) {
-        alert('復元するJSONファイルを選んでね');
-        return;
-      }
-
-      const ok = confirm('JSONの内容でデータを復元します（現在のデータは上書きされます）。よろしい？');
-      if (!ok) return;
-
-      try {
-        const text = await file.text();
-        const parsed = JSON.parse(text);
-
-        if (!isValidAllDataShape(parsed)) {
-          alert('このJSONは形式が違うみたい。日報アプリが出力したJSONを選んでね。');
+        if (
+          rows.length === 0 &&
+          (String(odo.a ?? '') === '' && String(odo.b ?? '') === '') &&
+          !checks.carDaily && !checks.alcohol
+        ) {
+          alert('この日の記録がありません（走行距離・チェックも未入力）');
           return;
         }
 
-        
-        saveAll(parsed);
-        editingIndex = null;
-        renderForDate(getSelectedDateKey());
+        const metaLines = [
+          ['日付', dateKey],
+          ['走行距離A（出勤メーターkm）', odo.a ?? ''],
+          ['走行距離B（退勤メーターkm）', odo.b ?? ''],
+          ['走行距離C（本日の走行距離km）', odoC],
+          ['社用車の日次点検を実施済', checks.carDaily ? '1' : '0'],
+          ['アルコールチェックを実施済', checks.alcohol ? '1' : '0'],
+          [],
+        ].map(cols => (cols.length ? cols.map(escapeCsvCell).join(',') : ''));
 
-        fileInput.value = '';
-        alert('復元が完了したよ');
-      } catch (e) {
-        alert(`復元に失敗：${e?.message || e}`);
-      }
-    };
+        const header = ['開始', '終了', '場所', '状態', 'メモ'];
+        const lines = [header.map(escapeCsvCell).join(',')];
+
+        for (const r of rows) {
+          lines.push([r.start, r.end, r.location, r.status, r.memo].map(escapeCsvCell).join(','));
+        }
+
+        const csvText = metaLines.join('\n') + '\n' + lines.join('\n');
+        downloadText(`nippo_${dateKey.replaceAll('-', '')}.csv`, csvText, 'text/csv', true);
+      };
+    } else {
+      console.log('exportCsvBtn が見つからない（HTMLにボタンがない）');
+    }
+
+    // ===== JSON出力（存在チェック付き）=====
+    const exportJsonBtn = document.getElementById('exportJsonBtn');
+    if (exportJsonBtn) {
+      exportJsonBtn.onclick = () => {
+        const all = loadAll();
+        if (!all || Object.keys(all).length === 0) {
+          alert('保存されているデータがありません');
+          return;
+        }
+        const stamp = new Date().toISOString().slice(0, 19).replace(/[-:T]/g, '');
+        downloadText(`nippo_backup_${stamp}.json`, JSON.stringify(all, null, 2), 'application/json', false);
+      };
+    }
+
+    // ===== 復元（JSON上書き）（存在チェック付き）=====
+    const importJsonBtn = document.getElementById('importJsonBtn');
+    if (importJsonBtn) {
+      importJsonBtn.onclick = async () => {
+        const fileInput = document.getElementById('importJsonFile');
+        const file = fileInput.files && fileInput.files[0];
+
+        if (!file) {
+          alert('復元するJSONファイルを選んでね');
+          return;
+        }
+
+        const ok = confirm('JSONの内容でデータを復元します（現在のデータは上書きされます）。よろしい？');
+        if (!ok) return;
+
+        try {
+          const text = await file.text();
+          const parsed = JSON.parse(text);
+
+          if (!isValidAllDataShape(parsed)) {
+            alert('このJSONは形式が違うみたい。日報アプリが出力したJSONを選んでね。');
+            return;
+          }
+
+          saveAll(parsed);
+          editingIndex = null;
+          renderForDate(getSelectedDateKey());
+
+          fileInput.value = '';
+          alert('復元が完了したよ');
+        } catch (e) {
+          alert(`復元に失敗：${e?.message || e}`);
+        }
+      };
+    }
 
     // Service Worker
     if ('serviceWorker' in navigator) {
@@ -758,6 +955,49 @@
 
     // 起動時反映
     onDateChanged();
+
+    // ===== 全データ一括クリア（端末内）=====
+    (function bindClearAllButton() {
+      const btn = document.getElementById('clearAllBtn');
+      if (!btn) {
+        console.log('[clearAll] ボタンが見つからない：id="clearAllBtn" を確認');
+        return;
+      }
+
+      if (btn.dataset.bound === '1') return;
+      btn.dataset.bound = '1';
+
+      btn.addEventListener('click', () => {
+        const ok = confirm(
+          '端末内に保存されている全データを削除します。\n' +
+          '（日報・走行距離・日々チェック）\n' +
+          'この操作は元に戻せません。本当に削除しますか？'
+        );
+        if (!ok) return;
+
+        localStorage.removeItem(STORAGE_KEY);
+        localStorage.removeItem(ODO_KEY);
+        localStorage.removeItem(CHECKS_KEY);
+
+        editingIndex = null;
+
+        const locEl = document.getElementById('location');
+        if (locEl) locEl.textContent = '';
+
+        const memoEl = document.getElementById('memo');
+        if (memoEl) memoEl.value = '';
+
+        clearTimes();
+
+        renderForDate(getSelectedDateKey());
+        setOdoUI('', '');
+        setChecksUI({ carDaily: false, alcohol: false });
+
+        alert('端末内の全データを削除しました。');
+      });
+
+      console.log('[clearAll] bind OK');
+    })();
   </script>
 </body>
 </html>
