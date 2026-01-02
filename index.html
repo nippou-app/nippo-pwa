@@ -13,126 +13,42 @@
   <script src="https://maps.gsi.go.jp/js/muni.js"></script>
 
   <style>
-    body {
-      font-family: system-ui, -apple-system, sans-serif;
-      margin: 16px;
-      background: #f5f5f5;
-    }
+    body { font-family: system-ui, -apple-system, sans-serif; margin: 16px; background: #f5f5f5; }
     h1 { font-size: 20px; margin-bottom: 12px; }
-    .card {
-      background: #fff;
-      border-radius: 12px;
-      padding: 16px;
-      margin-bottom: 12px;
-    }
-    label {
-      font-size: 16px;
-      margin-top: 8px;
-      display: block;
-      font-weight: 600;
-    }
-    button, select, input, textarea {
-      width: 100%;
-      padding: 10px;
-      margin-top: 6px;
-      font-size: 16px;
-      box-sizing: border-box;
-    }
+    .card { background: #fff; border-radius: 12px; padding: 16px; margin-bottom: 12px; }
+    label { font-size: 16px; margin-top: 8px; display: block; font-weight: 600; }
+    button, select, input, textarea { width: 100%; padding: 10px; margin-top: 6px; font-size: 16px; box-sizing: border-box; }
     textarea { resize: vertical; }
     .value { margin-top: 6px; font-size: 14px; color: #333; }
 
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 12px;
-    }
-    th, td {
-      border-bottom: 1px solid #ddd;
-      padding: 6px;
-      font-size: 14px;
-      vertical-align: top;
-    }
+    table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+    th, td { border-bottom: 1px solid #ddd; padding: 6px; font-size: 14px; vertical-align: top; }
     th { background: #eee; }
 
-    .delBtn {
-      width: auto;
-      padding: 6px 10px;
-      font-size: 14px;
-      margin-right: 6px;
-    }
+    .delBtn { width: auto; padding: 6px 10px; font-size: 14px; margin-right: 6px; }
 
-    /* チェックボックスだけ幅100%を外す */
-    .checkRow {
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      margin-top: 8px;
-    }
-    .checkRow input[type="checkbox"]{
-      width: auto;
-      transform: scale(1.2);
-      margin: 0;
-    }
-    .checkRow span{
-      font-size: 14px;
-    }
+    .checkRow { display: flex; gap: 10px; align-items: center; margin-top: 8px; }
+    .checkRow input[type="checkbox"]{ width: auto; transform: scale(1.2); margin: 0; }
+    .checkRow span{ font-size: 14px; }
 
-    /* 走行距離 A・B 横並び */
-    .odoRow {
-      display: flex;
-      gap: 12px;
-    }
+    .odoRow { display: flex; gap: 12px; }
+    .odoCol { flex: 1; }
 
-    .odoCol {
-      flex: 1;
-    }
-
-    /* 開始・終了ボタン 4つ横並び */
     .timeRowAll {
       display: flex;
       gap: 8px;
       align-items: center;
       margin-top: 6px;
-      flex-wrap: wrap; /* 画面狭い時は折り返し */
+      flex-wrap: wrap;
     }
+    .timeRowAll button:not(.btnSmall) { flex: 1; min-width: 120px; }
+    .btnSmall { width: auto; padding: 8px 10px; font-size: 13px; flex: 0 0 auto; }
 
-    /* 取得ボタン（大きめ） */
-    .timeRowAll button:not(.btnSmall) {
-      flex: 1;
-      min-width: 120px;
-    }
+    .sectionDivider { margin: 20px 0 16px; border: none; border-top: 2px solid #ccc; }
 
-    /* クリアボタン（小さめ） */
-    .btnSmall {
-      width: auto;
-      padding: 8px 10px;
-      font-size: 13px;
-      flex: 0 0 auto;
-    }
+    #startBtn, #endBtn, #locBtn { background-color: #e6f4ea; border: 1px solid #b7dfc5; color: #1b5e20; }
+    #startBtn:hover, #endBtn:hover, #locBtn:hover { background-color: #d8efdf; }
 
-    /* セクション区切り線 */
-    .sectionDivider {
-      margin: 20px 0 16px;
-      border: none;
-      border-top: 2px solid #ccc;
-    }
-
-    /* 取得系ボタン（開始・終了・現在地）を薄緑に */
-    #startBtn,
-    #endBtn,
-    #locBtn {
-      background-color: #e6f4ea;
-      border: 1px solid #b7dfc5;
-      color: #1b5e20;
-    }
-
-    #startBtn:hover,
-    #endBtn:hover,
-    #locBtn:hover {
-      background-color: #d8efdf;
-    }
-
-    /* 登録ボタン（主役） */
     #addBtn {
       background-color: #2e7d32;
       color: #fff;
@@ -143,39 +59,16 @@
       border-radius: 10px;
       box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
     }
-
     #addBtn:hover { background-color: #256628; }
+    #addBtn:active { background-color: #1b5e20; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2); transform: translateY(1px); }
 
-    #addBtn:active {
-      background-color: #1b5e20;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-      transform: translateY(1px);
-    }
-
-    /* ===== バックアップ・復元セクション（控えめ表示） ===== */
     .backupCard { padding: 12px; }
-    .backupCard label {
-      font-size: 13px;
-      font-weight: 600;
-      color: #555;
-    }
-    .backupCard button {
-      font-size: 14px;
-      padding: 8px 10px;
-    }
-    .backupCard input[type="file"] {
-      font-size: 13px;
-      padding: 6px;
-    }
+    .backupCard label { font-size: 13px; font-weight: 600; color: #555; }
+    .backupCard button { font-size: 14px; padding: 8px 10px; }
+    .backupCard input[type="file"] { font-size: 13px; padding: 6px; }
 
-    /* 管理メニュー（プルダウン） */
     .dangerMenu { margin-top: 10px; }
-    .dangerMenu summary {
-      cursor: pointer;
-      font-size: 13px;
-      color: #555;
-      user-select: none;
-    }
+    .dangerMenu summary { cursor: pointer; font-size: 13px; color: #555; user-select: none; }
 
     .btnDangerSmall {
       width: auto;
@@ -187,14 +80,85 @@
       color: #b42318;
       border-radius: 8px;
     }
-
     .btnDangerSmall:hover { background: #fbd5d1; }
     .btnDangerSmall:active { transform: translateY(1px); }
 
-    .dangerNote {
+    .dangerNote { margin-top: 6px; font-size: 12px; color: #777; }
+
+    /* ===== 編集モーダル ===== */
+    .modalOverlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      padding: 12px;
+    }
+    .modalOverlay.show { display: flex; }
+
+    .modalPanel {
+      width: 100%;
+      max-width: 720px;
+      background: #fff;
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+
+    .modalHeader {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 14px;
+      border-bottom: 1px solid #e5e5e5;
+      background: #fafafa;
+    }
+    .modalTitle { font-weight: 700; font-size: 16px; }
+    .modalClose {
+      width: auto;
+      padding: 6px 10px;
+      font-size: 18px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+    }
+
+    .modalBody { padding: 14px; }
+    .modalBody label { font-size: 14px; font-weight: 600; margin-top: 10px; display: block; }
+    .modalBody input, .modalBody select, .modalBody textarea {
+      width: 100%;
+      box-sizing: border-box;
       margin-top: 6px;
-      font-size: 12px;
-      color: #777;
+      font-size: 16px;
+      padding: 10px;
+    }
+
+    .modalFooter {
+      display: flex;
+      gap: 10px;
+      padding: 12px 14px;
+      border-top: 1px solid #e5e5e5;
+      background: #fafafa;
+    }
+    .modalFooter button { flex: 1; }
+
+    .btnPrimary {
+      background: #2e7d32;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-weight: 700;
+    }
+    .btnPrimary:active { transform: translateY(1px); }
+
+    .valueInput{
+      width: 100%;
+      padding: 10px;
+      margin-top: 6px;
+      font-size: 16px;
+      box-sizing: border-box;
     }
   </style>
 </head>
@@ -202,31 +166,26 @@
 <body>
   <h1>📘 日報アプリ</h1>
 
-  <!-- 入力エリア -->
   <div class="card">
     <label>日付</label>
     <input type="date" id="date" />
 
     <label>日々チェック</label>
-
     <div class="checkRow">
       <input type="checkbox" id="chkCarDaily" />
       <span>社用車の日次点検を実施済</span>
     </div>
-
     <div class="checkRow">
       <input type="checkbox" id="chkAlcohol" />
       <span>アルコールチェックを実施済</span>
     </div>
 
     <label>走行距離（メーター）</label>
-
     <div class="odoRow">
       <div class="odoCol">
         <label>A：出勤時のメーター（km）</label>
         <input type="number" id="odoA" inputmode="decimal" placeholder="例：12345">
       </div>
-
       <div class="odoCol">
         <label>B：退勤時のメーター（km）</label>
         <input type="number" id="odoB" inputmode="decimal" placeholder="例：12410">
@@ -248,6 +207,7 @@
       <option value="休憩">休憩</option>
     </select>
 
+    <!-- ✅ ここは1回だけ！ -->
     <div class="timeRowAll">
       <button id="startBtn" type="button">開始時刻を取得</button>
       <button id="startClearBtn" type="button" class="btnSmall">開始クリア</button>
@@ -256,71 +216,82 @@
       <button id="endClearBtn" type="button" class="btnSmall">終了クリア</button>
     </div>
 
-    <div id="startTime" class="value"></div>
-    <div id="endTime" class="value"></div>
+    <input type="text" id="startTime" class="valueInput" placeholder="開始（yyyy/mm/dd hh:mm）">
+    <input type="text" id="endTime" class="valueInput" placeholder="終了（yyyy/mm/dd hh:mm）">
 
     <button id="locBtn" type="button">現在地を取得</button>
-    <div id="location" class="value"></div>
+    <input type="text" id="location" class="valueInput" placeholder="場所（都道府県 市区町村）">
 
     <label>メモ</label>
     <textarea id="memo" rows="2"></textarea>
 
     <button id="addBtn" type="button">登録</button>
 
-    <!-- ★復活：CSV出力（JSが落ちる原因だった） -->
     <button id="exportCsvBtn" type="button">この日のCSVを出力</button>
 
     <hr class="sectionDivider">
   </div>
 
-  <!-- 一覧 -->
   <div class="card">
     <h2>今日の記録</h2>
     <table>
       <thead>
         <tr>
-          <th>開始</th>
-          <th>終了</th>
-          <th>場所</th>
-          <th>状態</th>
-          <th>メモ</th>
-          <th>編集</th>
-          <th>削除</th>
+          <th>開始</th><th>終了</th><th>場所</th><th>状態</th><th>メモ</th><th>編集</th><th>削除</th>
         </tr>
       </thead>
       <tbody id="list"></tbody>
     </table>
   </div>
 
-  <!-- ===== 全データのバックアップと復元 ===== -->
   <div class="card backupCard">
     <label>全データのバックアップと復元</label>
 
-    <button id="exportJsonBtn" type="button">
-      全データをJSONで出力（バックアップ）
-    </button>
+    <button id="exportJsonBtn" type="button">全データをJSONで出力（バックアップ）</button>
 
     <label style="margin-top:12px;">JSONバックアップから復元</label>
     <input type="file" id="importJsonFile" accept="application/json,.json">
-    <button id="importJsonBtn" type="button">
-      JSONを読み込んで復元（上書き）
-    </button>
+    <button id="importJsonBtn" type="button">JSONを読み込んで復元（上書き）</button>
 
     <details class="dangerMenu">
       <summary>管理メニュー</summary>
-
-      <button id="clearAllBtn" type="button" class="btnDangerSmall">
-        端末内の全データを一括削除
-      </button>
-
-      <div class="dangerNote">
-        ※日報・走行距離・日々チェックをすべて削除します（元に戻せません）
-      </div>
+      <button id="clearAllBtn" type="button" class="btnDangerSmall">端末内の全データを一括削除</button>
+      <div class="dangerNote">※日報・走行距離・日々チェックをすべて削除します（元に戻せません）</div>
     </details>
   </div>
 
+  <div id="editModal" class="modalOverlay" aria-hidden="true">
+    <div class="modalPanel" role="dialog" aria-modal="true" aria-labelledby="editModalTitle">
+      <div class="modalHeader">
+        <div id="editModalTitle" class="modalTitle">記録を編集</div>
+        <button type="button" id="editCloseBtn" class="modalClose">×</button>
+      </div>
+
+      <div class="modalBody">
+        <label>開始（yyyy/mm/dd hh:mm / 空OK）</label>
+        <input type="text" id="editStart" placeholder="例：2025/12/30 09:05">
+
+        <label>終了（yyyy/mm/dd hh:mm / 空OK）</label>
+        <input type="text" id="editEnd" placeholder="例：2025/12/30 18:10">
+
+        <label>場所（空でもOK）</label>
+        <input type="text" id="editLoc" placeholder="例：千葉県 船橋市">
+
+        <label>状態</label>
+        <select id="editStatus"></select>
+
+        <label>メモ</label>
+        <textarea id="editMemo" rows="5" placeholder="メモ"></textarea>
+      </div>
+
+      <div class="modalFooter">
+        <button type="button" id="editCancelBtn" class="delBtn">キャンセル</button>
+        <button type="button" id="editSaveBtn" class="btnPrimary">保存</button>
+      </div>
+    </div>
+  </div>
+
   <script>
-    // ===== ステータスの選択肢（編集UIで共通利用） =====
     const STATUS_OPTIONS = [
       { value: '', label: '未選択' },
       { value: '出勤', label: '出勤' },
@@ -331,671 +302,464 @@
       { value: '休憩', label: '休憩' },
     ];
 
-    function buildStatusSelect(currentValue) {
-      const sel = document.createElement('select');
-      sel.innerHTML = STATUS_OPTIONS.map(o => `<option value="${o.value}">${o.label}</option>`).join('');
-      sel.value = currentValue || '';
-      return sel;
-    }
-
-    // ====== 共通 ======
-    let editingIndex = null;
-
     function formatDateTime(date) {
       const pad = n => String(n).padStart(2, '0');
-      return (
-        date.getFullYear() + '/' +
-        pad(date.getMonth() + 1) + '/' +
-        pad(date.getDate()) + ' ' +
-        pad(date.getHours()) + ':' +
-        pad(date.getMinutes())
-      );
+      return date.getFullYear() + '/' + pad(date.getMonth()+1) + '/' + pad(date.getDate()) + ' ' + pad(date.getHours()) + ':' + pad(date.getMinutes());
     }
-
     function isValidDateTimeText(s) {
       return /^\d{4}\/\d{2}\/\d{2} \d{2}:\d{2}$/.test(String(s || '').trim());
     }
-
     function clearTimes() {
-      document.getElementById('startTime').textContent = '';
-      document.getElementById('endTime').textContent = '';
+      document.getElementById('startTime').value = '';
+      document.getElementById('endTime').value = '';
     }
 
-    // ===== 保存（日報行） =====
     const STORAGE_KEY = 'nippoRecordsV1';
+    function loadAll() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch { return {}; } }
+    function saveAll(all) { localStorage.setItem(STORAGE_KEY, JSON.stringify(all)); }
+    function getSelectedDateKey() { return document.getElementById('date').value; }
 
-    function loadAll() {
-      try {
-        return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-      } catch {
-        return {};
-      }
-    }
-    function saveAll(all) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
-    }
-
-    function getSelectedDateKey() {
-      return document.getElementById('date').value;
-    }
-
-    // ===== 走行距離（メーター）保存 =====
     const ODO_KEY = 'nippoOdoV1';
-
-    function loadOdoAll() {
-      try {
-        return JSON.parse(localStorage.getItem(ODO_KEY) || '{}');
-      } catch {
-        return {};
-      }
+    function loadOdoAll() { try { return JSON.parse(localStorage.getItem(ODO_KEY) || '{}'); } catch { return {}; } }
+    function saveOdoAll(all) { localStorage.setItem(ODO_KEY, JSON.stringify(all)); }
+    function calcDistance(a,b){
+      if (a===''||b==='') return '';
+      const na=Number(a), nb=Number(b);
+      if(!Number.isFinite(na)||!Number.isFinite(nb)) return '';
+      const d=nb-na;
+      return Number.isFinite(d)?String(d):'';
     }
-    function saveOdoAll(all) {
-      localStorage.setItem(ODO_KEY, JSON.stringify(all));
+    function setOdoUI(a,b){
+      document.getElementById('odoA').value=(a??'');
+      document.getElementById('odoB').value=(b??'');
+      document.getElementById('odoC').value=calcDistance(a??'', b??'');
     }
-
-    function calcDistance(a, b) {
-      if (a === '' || b === '') return '';
-      const na = Number(a);
-      const nb = Number(b);
-      if (!Number.isFinite(na) || !Number.isFinite(nb)) return '';
-      const d = nb - na;
-      return Number.isFinite(d) ? String(d) : '';
+    function loadOdoForDate(dateKey){
+      const all=loadOdoAll();
+      const data=all[dateKey]||{a:'',b:''};
+      setOdoUI(data.a??'', data.b??'');
     }
-
-    function setOdoUI(a, b) {
-      document.getElementById('odoA').value = (a ?? '');
-      document.getElementById('odoB').value = (b ?? '');
-      document.getElementById('odoC').value = calcDistance(a ?? '', b ?? '');
-    }
-
-    function loadOdoForDate(dateKey) {
-      const all = loadOdoAll();
-      const data = all[dateKey] || { a: '', b: '' };
-      setOdoUI(data.a ?? '', data.b ?? '');
-    }
-
-    function saveOdoForDate(dateKey) {
-      const a = document.getElementById('odoA').value.trim();
-      const b = document.getElementById('odoB').value.trim();
-
-      const all = loadOdoAll();
-      all[dateKey] = { a, b };
+    function saveOdoForDate(dateKey){
+      const a=document.getElementById('odoA').value.trim();
+      const b=document.getElementById('odoB').value.trim();
+      const all=loadOdoAll();
+      all[dateKey]={a,b};
       saveOdoAll(all);
-
-      document.getElementById('odoC').value = calcDistance(a, b);
+      document.getElementById('odoC').value=calcDistance(a,b);
     }
 
-    // ===== 日々チェック保存 =====
-    const CHECKS_KEY = 'nippoDailyChecksV1';
-
-    function loadChecksAll() {
-      try {
-        return JSON.parse(localStorage.getItem(CHECKS_KEY) || '{}');
-      } catch {
-        return {};
-      }
+    const CHECKS_KEY='nippoDailyChecksV1';
+    function loadChecksAll(){ try { return JSON.parse(localStorage.getItem(CHECKS_KEY)||'{}'); } catch { return {}; } }
+    function saveChecksAll(all){ localStorage.setItem(CHECKS_KEY, JSON.stringify(all)); }
+    function setChecksUI(state){
+      document.getElementById('chkCarDaily').checked=!!state?.carDaily;
+      document.getElementById('chkAlcohol').checked=!!state?.alcohol;
     }
-    function saveChecksAll(all) {
-      localStorage.setItem(CHECKS_KEY, JSON.stringify(all));
-    }
-
-    function setChecksUI(state) {
-      document.getElementById('chkCarDaily').checked = !!state?.carDaily;
-      document.getElementById('chkAlcohol').checked = !!state?.alcohol;
-    }
-
-    function loadChecksForDate(dateKey) {
-      const all = loadChecksAll();
-      const state = all[dateKey] || { carDaily: false, alcohol: false };
+    function loadChecksForDate(dateKey){
+      const all=loadChecksAll();
+      const state = all[dateKey] ?? { carDaily: true, alcohol: true };
       setChecksUI(state);
+      if (!(dateKey in all)) { all[dateKey]=state; saveChecksAll(all); }
     }
-
-    function saveChecksForDate(dateKey) {
-      const all = loadChecksAll();
-      all[dateKey] = {
+    function saveChecksForDate(dateKey){
+      const all=loadChecksAll();
+      all[dateKey]={
         carDaily: document.getElementById('chkCarDaily').checked,
         alcohol: document.getElementById('chkAlcohol').checked,
       };
       saveChecksAll(all);
     }
 
-    // ===== 既存データ互換：datetime → start/end へ吸収 =====
-    function normalizeRecord(r) {
-      const start = (typeof r.start === 'string') ? r.start
-                  : (typeof r.datetime === 'string') ? r.datetime
-                  : '';
-      const end = (typeof r.end === 'string') ? r.end : '';
-      return {
-        start,
-        end,
-        location: String(r.location ?? ''),
-        status: String(r.status ?? ''),
-        memo: String(r.memo ?? '')
-      };
+    function normalizeRecord(r){
+      const start = (typeof r.start==='string')?r.start : (typeof r.datetime==='string')?r.datetime : '';
+      const end = (typeof r.end==='string')?r.end:'';
+      return { start, end, location:String(r.location??''), status:String(r.status??''), memo:String(r.memo??'') };
     }
 
-    // ===== 表描画（編集対応） =====
-    function renderForDate(dateKey) {
-      const tbody = document.getElementById('list');
-      tbody.innerHTML = '';
+    function renderForDate(dateKey){
+      const tbody=document.getElementById('list');
+      tbody.innerHTML='';
+      const all=loadAll();
+      const rowsRaw=all[dateKey]||[];
+      const rows=rowsRaw.map(normalizeRecord);
+      if(rowsRaw.length>0){ all[dateKey]=rows; saveAll(all); }
 
-      const all = loadAll();
-      const rowsRaw = all[dateKey] || [];
-      const rows = rowsRaw.map(normalizeRecord);
+      rows.forEach((r,idx)=>{
+        const tr=document.createElement('tr');
+        const tdStart=document.createElement('td');
+        const tdEnd=document.createElement('td');
+        const tdLoc=document.createElement('td');
+        const tdStatus=document.createElement('td');
+        const tdMemo=document.createElement('td');
+        const tdEdit=document.createElement('td');
+        const tdDel=document.createElement('td');
 
-      if (rowsRaw.length > 0) {
-        all[dateKey] = rows;
-        saveAll(all);
-      }
+        tdStart.textContent=r.start;
+        tdEnd.textContent=r.end;
+        tdLoc.textContent=r.location;
+        tdStatus.textContent=r.status;
+        tdMemo.textContent=r.memo;
 
-      rows.forEach((r, idx) => {
-        const tr = document.createElement('tr');
+        const editBtn=document.createElement('button');
+        editBtn.type='button';
+        editBtn.textContent='編集';
+        editBtn.className='delBtn';
+        editBtn.addEventListener('click',()=>openEditModal(dateKey, idx, r));
+        tdEdit.appendChild(editBtn);
 
-        const tdStart = document.createElement('td');
-        const tdEnd = document.createElement('td');
-        const tdLoc = document.createElement('td');
-        const tdStatus = document.createElement('td');
-        const tdMemo = document.createElement('td');
-        const tdEdit = document.createElement('td');
-        const tdDel = document.createElement('td');
+        const delBtn=document.createElement('button');
+        delBtn.type='button';
+        delBtn.textContent='削除';
+        delBtn.className='delBtn';
+        delBtn.addEventListener('click',()=>{
+          const ok=confirm('この行を削除する？');
+          if(!ok) return;
+          const all2=loadAll();
+          const rows2=(all2[dateKey]||[]).map(normalizeRecord);
+          rows2.splice(idx,1);
+          all2[dateKey]=rows2;
+          saveAll(all2);
+          renderForDate(dateKey);
+        });
+        tdDel.appendChild(delBtn);
 
-        const isEditing = (editingIndex === idx);
-
-        if (isEditing) {
-          const startInput = document.createElement('input');
-          startInput.type = 'text';
-          startInput.value = r.start;
-          startInput.placeholder = 'yyyy/mm/dd hh:mm（空OK）';
-
-          const endInput = document.createElement('input');
-          endInput.type = 'text';
-          endInput.value = r.end;
-          endInput.placeholder = 'yyyy/mm/dd hh:mm（空OK）';
-
-          const locInput = document.createElement('input');
-          locInput.type = 'text';
-          locInput.value = r.location;
-          locInput.placeholder = '空でもOK';
-
-          const statusSelect = buildStatusSelect(r.status);
-
-          const memoInput = document.createElement('textarea');
-          memoInput.rows = 2;
-          memoInput.value = r.memo;
-
-          tdStart.appendChild(startInput);
-          tdEnd.appendChild(endInput);
-          tdLoc.appendChild(locInput);
-          tdStatus.appendChild(statusSelect);
-          tdMemo.appendChild(memoInput);
-
-          const saveBtn = document.createElement('button');
-          saveBtn.type = 'button';
-          saveBtn.textContent = '保存';
-          saveBtn.className = 'delBtn';
-
-          saveBtn.addEventListener('click', () => {
-            const newStart = startInput.value.trim();
-            const newEnd = endInput.value.trim();
-            const newLoc = locInput.value.trim();
-            const newStatus = statusSelect.value;
-            const newMemo = memoInput.value;
-
-            if (newStart && !isValidDateTimeText(newStart)) {
-              alert('開始の形式が違うよ。例：2025/12/30 09:05');
-              return;
-            }
-            if (newEnd && !isValidDateTimeText(newEnd)) {
-              alert('終了の形式が違うよ。例：2025/12/30 18:10');
-              return;
-            }
-
-            const all2 = loadAll();
-            const rows2 = (all2[dateKey] || []).map(normalizeRecord);
-            if (!rows2[idx]) return;
-
-            rows2[idx].start = newStart;
-            rows2[idx].end = newEnd;
-            rows2[idx].location = newLoc;
-            rows2[idx].status = newStatus;
-            rows2[idx].memo = String(newMemo ?? '');
-
-            all2[dateKey] = rows2;
-            saveAll(all2);
-
-            editingIndex = null;
-            renderForDate(dateKey);
-          });
-
-          const cancelBtn = document.createElement('button');
-          cancelBtn.type = 'button';
-          cancelBtn.textContent = 'キャンセル';
-          cancelBtn.className = 'delBtn';
-          cancelBtn.addEventListener('click', () => {
-            editingIndex = null;
-            renderForDate(dateKey);
-          });
-
-          tdEdit.appendChild(saveBtn);
-          tdEdit.appendChild(cancelBtn);
-          tdDel.textContent = '';
-
-        } else {
-          tdStart.textContent = r.start;
-          tdEnd.textContent = r.end;
-          tdLoc.textContent = r.location;
-          tdStatus.textContent = r.status;
-          tdMemo.textContent = r.memo;
-
-          const editBtn = document.createElement('button');
-          editBtn.type = 'button';
-          editBtn.textContent = '編集';
-          editBtn.className = 'delBtn';
-          editBtn.addEventListener('click', () => {
-            editingIndex = idx;
-            renderForDate(dateKey);
-          });
-          tdEdit.appendChild(editBtn);
-
-          const delBtn = document.createElement('button');
-          delBtn.type = 'button';
-          delBtn.textContent = '削除';
-          delBtn.className = 'delBtn';
-          delBtn.addEventListener('click', () => {
-            const ok = confirm('この行を削除する？');
-            if (!ok) return;
-
-            const all2 = loadAll();
-            const rows2 = (all2[dateKey] || []).map(normalizeRecord);
-            rows2.splice(idx, 1);
-            all2[dateKey] = rows2;
-            saveAll(all2);
-
-            editingIndex = null;
-            renderForDate(dateKey);
-          });
-          tdDel.appendChild(delBtn);
-        }
-
-        tr.appendChild(tdStart);
-        tr.appendChild(tdEnd);
-        tr.appendChild(tdLoc);
-        tr.appendChild(tdStatus);
-        tr.appendChild(tdMemo);
-        tr.appendChild(tdEdit);
-        tr.appendChild(tdDel);
-
+        tr.appendChild(tdStart); tr.appendChild(tdEnd); tr.appendChild(tdLoc); tr.appendChild(tdStatus); tr.appendChild(tdMemo); tr.appendChild(tdEdit); tr.appendChild(tdDel);
         tbody.appendChild(tr);
       });
     }
 
-    // ===== CSV/JSON 共通 =====
-    function escapeCsvCell(value) {
-      const s = String(value ?? '');
-      if (/[,"\n\r]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+    function escapeCsvCell(value){
+      const s=String(value??'');
+      if (/[,"\n\r]/.test(s)) return `"${s.replace(/"/g,'""')}"`;
       return s;
     }
-
-    function downloadText(filename, text, mime = 'text/plain', withBom = false) {
-      const bom = withBom ? '\ufeff' : '';
-      const blob = new Blob([bom + text], { type: mime + ';charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-
+    function downloadText(filename,text,mime='text/plain',withBom=false){
+      const bom=withBom?'\ufeff':'';
+      const blob=new Blob([bom+text],{type:mime+';charset=utf-8'});
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a');
+      a.href=url; a.download=filename;
+      document.body.appendChild(a); a.click(); a.remove();
       URL.revokeObjectURL(url);
     }
 
-    // ===== JSON復元（検証）※旧形式もOK =====
-    function isValidAllDataShape(all) {
-      if (typeof all !== 'object' || all === null || Array.isArray(all)) return false;
-
-      for (const [dateKey, rows] of Object.entries(all)) {
-        if (!/^\d{4}-\d{2}-\d{2}$/.test(dateKey)) return false;
-        if (!Array.isArray(rows)) return false;
-
-        for (const r of rows) {
-          if (typeof r !== 'object' || r === null) return false;
-
-          const hasNew = ('start' in r) || ('end' in r);
-          const hasOld = ('datetime' in r);
-          if (!hasNew && !hasOld) return false;
-
-          if (hasOld && typeof r.datetime !== 'string') return false;
-          if ('start' in r && typeof r.start !== 'string') return false;
-          if ('end' in r && typeof r.end !== 'string') return false;
-
-          if (typeof r.location !== 'string') return false;
-          if (typeof r.status !== 'string') return false;
-          if (typeof r.memo !== 'string') return false;
+    function isValidAllDataShape(all){
+      if(typeof all!=='object'||all===null||Array.isArray(all)) return false;
+      for(const [dateKey,rows] of Object.entries(all)){
+        if(!/^\d{4}-\d{2}-\d{2}$/.test(dateKey)) return false;
+        if(!Array.isArray(rows)) return false;
+        for(const r of rows){
+          if(typeof r!=='object'||r===null) return false;
+          const hasNew=('start' in r)||('end' in r);
+          const hasOld=('datetime' in r);
+          if(!hasNew && !hasOld) return false;
+          if(hasOld && typeof r.datetime!=='string') return false;
+          if('start' in r && typeof r.start!=='string') return false;
+          if('end' in r && typeof r.end!=='string') return false;
+          if(typeof r.location!=='string') return false;
+          if(typeof r.status!=='string') return false;
+          if(typeof r.memo!=='string') return false;
         }
       }
       return true;
     }
 
-    // ===== 起動時設定 =====
-    //const today = new Date().toISOString().slice(0, 10);
-    const today = getTodayLocalISO();
-    document.getElementById('date').value = today;
+    function getTodayLocalISO(){
+      const d=new Date();
+      d.setMinutes(d.getMinutes()-d.getTimezoneOffset());
+      return d.toISOString().slice(0,10);
+    }
 
-    
+    const today=getTodayLocalISO();
+    document.getElementById('date').value=today;
 
-    function onDateChanged() {
-      const dateKey = getSelectedDateKey();
-      editingIndex = null;
-
+    function onDateChanged(){
+      const dateKey=getSelectedDateKey();
       renderForDate(dateKey);
       loadOdoForDate(dateKey);
       loadChecksForDate(dateKey);
-
       clearTimes();
     }
-
-    function getTodayLocalISO() {
-      const d = new Date();
-      d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); // ローカル→ISOズレ補正
-      return d.toISOString().slice(0, 10);
-    }
-
-
     document.getElementById('date').addEventListener('change', onDateChanged);
 
-    // 走行距離：入力のたびに保存＆C更新
-    document.getElementById('odoA').addEventListener('input', () => saveOdoForDate(getSelectedDateKey()));
-    document.getElementById('odoB').addEventListener('input', () => saveOdoForDate(getSelectedDateKey()));
+    document.getElementById('odoA').addEventListener('input',()=>saveOdoForDate(getSelectedDateKey()));
+    document.getElementById('odoB').addEventListener('input',()=>saveOdoForDate(getSelectedDateKey()));
 
-    // 日々チェック：変更のたびに保存
-    document.getElementById('chkCarDaily').addEventListener('change', () => saveChecksForDate(getSelectedDateKey()));
-    document.getElementById('chkAlcohol').addEventListener('change', () => saveChecksForDate(getSelectedDateKey()));
+    document.getElementById('chkCarDaily').addEventListener('change',()=>saveChecksForDate(getSelectedDateKey()));
+    document.getElementById('chkAlcohol').addEventListener('change',()=>saveChecksForDate(getSelectedDateKey()));
 
-    // 開始/終了 時刻取得
-    document.getElementById('startBtn').onclick = () => {
-      document.getElementById('startTime').textContent = formatDateTime(new Date());
-    };
-    document.getElementById('endBtn').onclick = () => {
-      document.getElementById('endTime').textContent = formatDateTime(new Date());
-    };
+    document.getElementById('startBtn').onclick=()=>{ document.getElementById('startTime').value=formatDateTime(new Date()); };
+    document.getElementById('endBtn').onclick=()=>{ document.getElementById('endTime').value=formatDateTime(new Date()); };
+    document.getElementById('startClearBtn').onclick=()=>{ document.getElementById('startTime').value=''; };
+    document.getElementById('endClearBtn').onclick=()=>{ document.getElementById('endTime').value=''; };
 
-    // 開始/終了 クリア
-    document.getElementById('startClearBtn').onclick = () => {
-      document.getElementById('startTime').textContent = '';
-    };
-    document.getElementById('endClearBtn').onclick = () => {
-      document.getElementById('endTime').textContent = '';
-    };
+    // ✅ ここが「取得中のまま」修正の本丸：textContentを使わない
+    document.getElementById('locBtn').onclick=()=>{
+      const locEl=document.getElementById('location');
+      locEl.value='位置情報を取得中…';
 
-    // ===== 現在地取得（GSI優先 → Nominatimフォールバック） =====
-    document.getElementById('locBtn').onclick = () => {
-      const locEl = document.getElementById('location');
-      locEl.textContent = '位置情報を取得中…';
-
-      if (!navigator.geolocation) {
-        locEl.textContent = 'この端末では位置情報が使えません';
+      if(!navigator.geolocation){
+        locEl.value='この端末では位置情報が使えません';
         return;
       }
 
-      navigator.geolocation.getCurrentPosition(
-        async (pos) => {
-          const lat = pos.coords.latitude;
-          const lon = pos.coords.longitude;
+      navigator.geolocation.getCurrentPosition(async (pos)=>{
+        const lat=pos.coords.latitude;
+        const lon=pos.coords.longitude;
 
-          // ① GSI（国土地理院）優先
-          try {
-            const gsiUrl = `https://mreversegeocoder.gsi.go.jp/reverse-geocoder/LonLatToAddress?lat=${lat}&lon=${lon}`;
-            const gsiRes = await fetch(gsiUrl);
-
-            if (gsiRes.ok) {
-              const gsi = await gsiRes.json();
-              const muniCd = gsi?.results?.muniCd;
-              const lv01Nm = gsi?.results?.lv01Nm || '';
-
-              if (muniCd && window.GSI && GSI.MUNI_ARRAY) {
-                const key = String(muniCd).replace(/^0+/, '');
-                const row = GSI.MUNI_ARRAY[key];
-
-                if (row) {
-                  const parts = row.split(',');
-                  const prefName = parts[1] || '';
-                  const cityName = parts[3] || '';
-
-                  const place = [prefName, cityName].filter(Boolean).join(' ');
-                  locEl.textContent = place || '住所を取得できませんでした（GSI: データ不足）';
-                  return;
-                }
+        // ① GSI
+        try{
+          const gsiUrl=`https://mreversegeocoder.gsi.go.jp/reverse-geocoder/LonLatToAddress?lat=${lat}&lon=${lon}`;
+          const gsiRes=await fetch(gsiUrl);
+          if(gsiRes.ok){
+            const gsi=await gsiRes.json();
+            const muniCd=gsi?.results?.muniCd;
+            if(muniCd && window.GSI && GSI.MUNI_ARRAY){
+              const key=String(muniCd).replace(/^0+/,'');
+              const row=GSI.MUNI_ARRAY[key];
+              if(row){
+                const parts=row.split(',');
+                const prefName=parts[1]||'';
+                const cityName=parts[3]||'';
+                const place=[prefName, cityName].filter(Boolean).join(' ');
+                locEl.value = place || '住所を取得できませんでした（GSI: データ不足）';
+                return;
               }
             }
-          } catch (e) {
-            // 次へ（Nominatim）
+          }
+        }catch(e){}
+
+        // ② Nominatim
+        try{
+          locEl.value = `緯度経度取得OK（${lat.toFixed(6)}, ${lon.toFixed(6)}）→ 住所変換中…`;
+
+          const nominatimUrl=
+            `https://nominatim.openstreetmap.org/reverse?`+
+            `format=jsonv2&lat=${lat}&lon=${lon}&zoom=14&addressdetails=1&accept-language=ja`;
+
+          const res=await fetch(nominatimUrl, { headers:{'Accept-Language':'ja'} });
+          if(!res.ok){
+            locEl.value=`住所変換に失敗（Nominatim HTTP ${res.status}）`;
+            return;
           }
 
-          // ② Nominatim（フォールバック）
-          try {
-            locEl.textContent = `緯度経度取得OK（${lat.toFixed(6)}, ${lon.toFixed(6)}）→ 住所変換中…`;
+          const data=await res.json();
+          const addr=data.address||{};
+          const prefecture = addr.province || addr.state || addr.region || addr.state_district || '';
+          const city = addr.city || addr.municipality || addr.town || addr.village || addr.city_district || addr.county || addr.suburb || '';
 
-            const nominatimUrl =
-              `https://nominatim.openstreetmap.org/reverse?` +
-              `format=jsonv2&lat=${lat}&lon=${lon}&zoom=14&addressdetails=1&accept-language=ja`;
-
-            const res = await fetch(nominatimUrl, { headers: { 'Accept-Language': 'ja' } });
-
-            if (!res.ok) {
-              locEl.textContent = `住所変換に失敗（Nominatim HTTP ${res.status}）`;
-              return;
-            }
-
-            const data = await res.json();
-            const addr = data.address || {};
-
-            const prefecture =
-              addr.province || addr.state || addr.region || addr.state_district || '';
-
-            const city =
-              addr.city || addr.municipality || addr.town || addr.village ||
-              addr.city_district || addr.county || addr.suburb || '';
-
-            if (prefecture || city) {
-              locEl.textContent = [prefecture, city].filter(Boolean).join(' ');
-              return;
-            }
-
-            const dn = (data.display_name || '').split(',').slice(0, 3).join(',').trim();
-            locEl.textContent = dn ? dn : '住所を取得できませんでした（Nominatim: データ不足）';
-          } catch (e) {
-            locEl.textContent = `住所変換に失敗しました（${e?.message || e}）`;
+          if(prefecture || city){
+            locEl.value=[prefecture, city].filter(Boolean).join(' ');
+            return;
           }
-        },
-        (err) => {
-          const codeMap = {
-            1: '許可されていません（位置情報の許可がOFF）',
-            2: '位置情報を取得できません（電波/GPS/端末設定）',
-            3: 'タイムアウトしました',
-          };
-          document.getElementById('location').textContent =
-            `位置情報の取得ができませんでした：${codeMap[err.code] || '不明'} / ${err.message}`;
-        },
-        { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
-      );
+
+          const dn=(data.display_name||'').split(',').slice(0,3).join(',').trim();
+          locEl.value = dn ? dn : '住所を取得できませんでした（Nominatim: データ不足）';
+        }catch(e){
+          locEl.value = `住所変換に失敗しました（${e?.message || e}）`;
+        }
+      }, (err)=>{
+        const codeMap={
+          1:'許可されていません（位置情報の許可がOFF）',
+          2:'位置情報を取得できません（電波/GPS/端末設定）',
+          3:'タイムアウトしました',
+        };
+        document.getElementById('location').value =
+          `位置情報の取得ができませんでした：${codeMap[err.code] || '不明'} / ${err.message}`;
+      }, { enableHighAccuracy:true, timeout:15000, maximumAge:0 });
     };
 
-    // 登録：画面に入ってる開始/終了を保存（片方空でもOK）
-    document.getElementById('addBtn').onclick = () => {
-      const dateKey = getSelectedDateKey();
+    document.getElementById('addBtn').onclick=()=>{
+      const dateKey=getSelectedDateKey();
+      const start=document.getElementById('startTime').value.trim();
+      const end=document.getElementById('endTime').value.trim();
 
-      const start = document.getElementById('startTime').textContent.trim();
-      const end = document.getElementById('endTime').textContent.trim();
+      if(start && !isValidDateTimeText(start)){ alert('開始の形式が違うよ。例：2025/12/30 09:05'); return; }
+      if(end && !isValidDateTimeText(end)){ alert('終了の形式が違うよ。例：2025/12/30 18:10'); return; }
 
-      if (start && !isValidDateTimeText(start)) {
-        alert('開始の形式が違うよ。例：2025/12/30 09:05');
-        return;
-      }
-      if (end && !isValidDateTimeText(end)) {
-        alert('終了の形式が違うよ。例：2025/12/30 18:10');
-        return;
-      }
-
-      const record = {
-        start,
-        end,
-        location: document.getElementById('location').textContent || '',
+      const record={
+        start, end,
+        location: document.getElementById('location').value.trim(),
         status: document.getElementById('status').value,
         memo: document.getElementById('memo').value || ''
       };
 
-      const all = loadAll();
-      all[dateKey] = (all[dateKey] || []).map(normalizeRecord);
+      const all=loadAll();
+      all[dateKey]=(all[dateKey]||[]).map(normalizeRecord);
       all[dateKey].push(record);
       saveAll(all);
 
-      editingIndex = null;
       renderForDate(dateKey);
 
-      // 登録後クリア
-      document.getElementById('memo').value = '';
+      document.getElementById('memo').value='';
       clearTimes();
     };
 
-    // ===== CSV出力（存在チェック付き）=====
-    const exportCsvBtn = document.getElementById('exportCsvBtn');
-    if (exportCsvBtn) {
-      exportCsvBtn.onclick = () => {
-        const dateKey = getSelectedDateKey();
+    document.getElementById('exportCsvBtn').onclick=()=>{
+      const dateKey=getSelectedDateKey();
 
-        const all = loadAll();
-        const rows = (all[dateKey] || []).map(normalizeRecord);
+      const all=loadAll();
+      const rows=(all[dateKey]||[]).map(normalizeRecord);
 
-        const odoAll = loadOdoAll();
-        const odo = odoAll[dateKey] || { a: '', b: '' };
-        const odoC = calcDistance(String(odo.a ?? ''), String(odo.b ?? ''));
+      const odoAll=loadOdoAll();
+      const odo=odoAll[dateKey]||{a:'',b:''};
+      const odoC=calcDistance(String(odo.a??''), String(odo.b??''));
 
-        const checksAll = loadChecksAll();
-        const checks = checksAll[dateKey] || { carDaily: false, alcohol: false };
+      const checksAll=loadChecksAll();
+      const checks=checksAll[dateKey]||{carDaily:false, alcohol:false};
 
-        if (
-          rows.length === 0 &&
-          (String(odo.a ?? '') === '' && String(odo.b ?? '') === '') &&
-          !checks.carDaily && !checks.alcohol
-        ) {
-          alert('この日の記録がありません（走行距離・チェックも未入力）');
-          return;
-        }
-
-        const metaLines = [
-          ['日付', dateKey],
-          ['走行距離A（出勤メーターkm）', odo.a ?? ''],
-          ['走行距離B（退勤メーターkm）', odo.b ?? ''],
-          ['走行距離C（本日の走行距離km）', odoC],
-          ['社用車の日次点検を実施済', checks.carDaily ? '1' : '0'],
-          ['アルコールチェックを実施済', checks.alcohol ? '1' : '0'],
-          [],
-        ].map(cols => (cols.length ? cols.map(escapeCsvCell).join(',') : ''));
-
-        const header = ['開始', '終了', '場所', '状態', 'メモ'];
-        const lines = [header.map(escapeCsvCell).join(',')];
-
-        for (const r of rows) {
-          lines.push([r.start, r.end, r.location, r.status, r.memo].map(escapeCsvCell).join(','));
-        }
-
-        const csvText = metaLines.join('\n') + '\n' + lines.join('\n');
-        downloadText(`nippo_${dateKey.replaceAll('-', '')}.csv`, csvText, 'text/csv', true);
-      };
-    } else {
-      console.log('exportCsvBtn が見つからない（HTMLにボタンがない）');
-    }
-
-    // ===== JSON出力（存在チェック付き）=====
-    const exportJsonBtn = document.getElementById('exportJsonBtn');
-    if (exportJsonBtn) {
-      exportJsonBtn.onclick = () => {
-        const all = loadAll();
-        if (!all || Object.keys(all).length === 0) {
-          alert('保存されているデータがありません');
-          return;
-        }
-        const stamp = new Date().toISOString().slice(0, 19).replace(/[-:T]/g, '');
-        downloadText(`nippo_backup_${stamp}.json`, JSON.stringify(all, null, 2), 'application/json', false);
-      };
-    }
-
-    // ===== 復元（JSON上書き）（存在チェック付き）=====
-    const importJsonBtn = document.getElementById('importJsonBtn');
-    if (importJsonBtn) {
-      importJsonBtn.onclick = async () => {
-        const fileInput = document.getElementById('importJsonFile');
-        const file = fileInput.files && fileInput.files[0];
-
-        if (!file) {
-          alert('復元するJSONファイルを選んでね');
-          return;
-        }
-
-        const ok = confirm('JSONの内容でデータを復元します（現在のデータは上書きされます）。よろしい？');
-        if (!ok) return;
-
-        try {
-          const text = await file.text();
-          const parsed = JSON.parse(text);
-
-          if (!isValidAllDataShape(parsed)) {
-            alert('このJSONは形式が違うみたい。日報アプリが出力したJSONを選んでね。');
-            return;
-          }
-
-          saveAll(parsed);
-          editingIndex = null;
-          renderForDate(getSelectedDateKey());
-
-          fileInput.value = '';
-          alert('復元が完了したよ');
-        } catch (e) {
-          alert(`復元に失敗：${e?.message || e}`);
-        }
-      };
-    }
-
-    // Service Worker
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('./sw.js');
-    }
-
-    // 起動時反映
-    onDateChanged();
-
-    // ===== 全データ一括クリア（端末内）=====
-    (function bindClearAllButton() {
-      const btn = document.getElementById('clearAllBtn');
-      if (!btn) {
-        console.log('[clearAll] ボタンが見つからない：id="clearAllBtn" を確認');
+      if(rows.length===0 && (String(odo.a??'')==='' && String(odo.b??'')==='') && !checks.carDaily && !checks.alcohol){
+        alert('この日の記録がありません（走行距離・チェックも未入力）');
         return;
       }
 
-      if (btn.dataset.bound === '1') return;
-      btn.dataset.bound = '1';
+      const metaLines=[
+        ['日付', dateKey],
+        ['走行距離A（出勤メーターkm）', odo.a ?? ''],
+        ['走行距離B（退勤メーターkm）', odo.b ?? ''],
+        ['走行距離C（本日の走行距離km）', odoC],
+        ['社用車の日次点検を実施済', checks.carDaily ? '1' : '0'],
+        ['アルコールチェックを実施済', checks.alcohol ? '1' : '0'],
+        [],
+      ].map(cols => (cols.length ? cols.map(escapeCsvCell).join(',') : ''));
 
-      btn.addEventListener('click', () => {
-        const ok = confirm(
+      const header=['開始','終了','場所','状態','メモ'];
+      const lines=[header.map(escapeCsvCell).join(',')];
+      for(const r of rows){
+        lines.push([r.start, r.end, r.location, r.status, r.memo].map(escapeCsvCell).join(','));
+      }
+
+      const csvText = metaLines.join('\n') + '\n' + lines.join('\n');
+      downloadText(`nippo_${dateKey.replaceAll('-', '')}.csv`, csvText, 'text/csv', true);
+    };
+
+    document.getElementById('exportJsonBtn').onclick=()=>{
+      const all=loadAll();
+      if(!all || Object.keys(all).length===0){ alert('保存されているデータがありません'); return; }
+      const stamp=new Date().toISOString().slice(0,19).replace(/[-:T]/g,'');
+      downloadText(`nippo_backup_${stamp}.json`, JSON.stringify(all,null,2), 'application/json', false);
+    };
+
+    document.getElementById('importJsonBtn').onclick=async ()=>{
+      const fileInput=document.getElementById('importJsonFile');
+      const file=fileInput.files && fileInput.files[0];
+      if(!file){ alert('復元するJSONファイルを選んでね'); return; }
+
+      const ok=confirm('JSONの内容でデータを復元します（現在のデータは上書きされます）。よろしい？');
+      if(!ok) return;
+
+      try{
+        const text=await file.text();
+        const parsed=JSON.parse(text);
+
+        if(!isValidAllDataShape(parsed)){
+          alert('このJSONは形式が違うみたい。日報アプリが出力したJSONを選んでね。');
+          return;
+        }
+
+        saveAll(parsed);
+        renderForDate(getSelectedDateKey());
+        fileInput.value='';
+        alert('復元が完了したよ');
+      }catch(e){
+        alert(`復元に失敗：${e?.message || e}`);
+      }
+    };
+
+    if('serviceWorker' in navigator){ navigator.serviceWorker.register('./sw.js'); }
+
+    // ===== 編集モーダル（あなたの実装をそのまま維持） =====
+    let editTargetDateKey=null;
+    let editTargetIndex=null;
+
+    function openEditModal(dateKey, idx, record){
+      editTargetDateKey=dateKey;
+      editTargetIndex=idx;
+
+      document.getElementById('editStart').value=record.start || '';
+      document.getElementById('editEnd').value=record.end || '';
+      document.getElementById('editLoc').value=record.location || '';
+      document.getElementById('editMemo').value=record.memo || '';
+
+      const sel=document.getElementById('editStatus');
+      sel.innerHTML=STATUS_OPTIONS.map(o=>`<option value="${o.value}">${o.label}</option>`).join('');
+      sel.value=record.status || '';
+
+      const modal=document.getElementById('editModal');
+      modal.classList.add('show');
+      modal.setAttribute('aria-hidden','false');
+      setTimeout(()=>document.getElementById('editStart').focus(),50);
+    }
+
+    function closeEditModal(){
+      const modal=document.getElementById('editModal');
+      modal.classList.remove('show');
+      modal.setAttribute('aria-hidden','true');
+      editTargetDateKey=null;
+      editTargetIndex=null;
+    }
+
+    (function bindEditModalEvents(){
+      const modal=document.getElementById('editModal');
+      document.getElementById('editCloseBtn').addEventListener('click', closeEditModal);
+      document.getElementById('editCancelBtn').addEventListener('click', closeEditModal);
+      modal.addEventListener('click',(e)=>{ if(e.target===modal) closeEditModal(); });
+
+      document.getElementById('editSaveBtn').addEventListener('click',()=>{
+        if(editTargetDateKey==null || editTargetIndex==null) return;
+
+        const newStart=document.getElementById('editStart').value.trim();
+        const newEnd=document.getElementById('editEnd').value.trim();
+        const newLoc=document.getElementById('editLoc').value.trim();
+        const newStatus=document.getElementById('editStatus').value;
+        const newMemo=document.getElementById('editMemo').value;
+
+        if(newStart && !isValidDateTimeText(newStart)){ alert('開始の形式が違うよ。例：2025/12/30 09:05'); return; }
+        if(newEnd && !isValidDateTimeText(newEnd)){ alert('終了の形式が違うよ。例：2025/12/30 18:10'); return; }
+
+        const all2=loadAll();
+        const rows2=(all2[editTargetDateKey]||[]).map(normalizeRecord);
+        if(!rows2[editTargetIndex]) return;
+
+        rows2[editTargetIndex].start=newStart;
+        rows2[editTargetIndex].end=newEnd;
+        rows2[editTargetIndex].location=newLoc;
+        rows2[editTargetIndex].status=newStatus;
+        rows2[editTargetIndex].memo=String(newMemo ?? '');
+
+        all2[editTargetDateKey]=rows2;
+        saveAll(all2);
+
+        closeEditModal();
+        renderForDate(editTargetDateKey);
+      });
+    })();
+
+    // ===== 全データ一括クリア =====
+    (function bindClearAllButton(){
+      const btn=document.getElementById('clearAllBtn');
+      if(!btn){ console.log('[clearAll] ボタンが見つからない'); return; }
+      if(btn.dataset.bound==='1') return;
+      btn.dataset.bound='1';
+
+      btn.addEventListener('click',()=>{
+        const ok=confirm(
           '端末内に保存されている全データを削除します。\n' +
           '（日報・走行距離・日々チェック）\n' +
           'この操作は元に戻せません。本当に削除しますか？'
         );
-        if (!ok) return;
+        if(!ok) return;
 
         localStorage.removeItem(STORAGE_KEY);
         localStorage.removeItem(ODO_KEY);
         localStorage.removeItem(CHECKS_KEY);
 
-        editingIndex = null;
+        // ✅ inputなのでvalueで消す
+        const locEl=document.getElementById('location');
+        if(locEl) locEl.value='';
 
-        const locEl = document.getElementById('location');
-        if (locEl) locEl.textContent = '';
-
-        const memoEl = document.getElementById('memo');
-        if (memoEl) memoEl.value = '';
+        const memoEl=document.getElementById('memo');
+        if(memoEl) memoEl.value='';
 
         clearTimes();
 
@@ -1005,10 +769,9 @@
 
         alert('端末内の全データを削除しました。');
       });
-
-      console.log('[clearAll] bind OK');
     })();
-    
+
+    onDateChanged();
   </script>
 </body>
 </html>
