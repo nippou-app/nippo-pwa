@@ -207,7 +207,6 @@
       <option value="休憩">休憩</option>
     </select>
 
-    <!-- ✅ ここは1回だけ！ -->
     <div class="timeRowAll">
       <button id="startBtn" type="button">開始時刻を取得</button>
       <button id="startClearBtn" type="button" class="btnSmall">開始クリア</button>
@@ -227,7 +226,7 @@
 
     <button id="addBtn" type="button">登録</button>
 
-    <button id="exportCsvBtn" type="button">この日のCSVを出力</button>
+    <button id="exportCsvBtn" type="button">この月のCSVを出力</button>
 
     <hr class="sectionDivider">
   </div>
@@ -314,14 +313,21 @@
       document.getElementById('endTime').value = '';
     }
 
-    const STORAGE_KEY = 'nippoRecordsV1';
+    // ===== ローカル保存キー =====
+    const STORAGE_KEY = 'nippoRecordsV1';     // 記録（行）
+    const ODO_KEY     = 'nippoOdoV1';         // 走行距離（A/B）
+    const CHECKS_KEY  = 'nippoDailyChecksV1'; // 日々チェック
+
     function loadAll() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch { return {}; } }
     function saveAll(all) { localStorage.setItem(STORAGE_KEY, JSON.stringify(all)); }
     function getSelectedDateKey() { return document.getElementById('date').value; }
 
-    const ODO_KEY = 'nippoOdoV1';
     function loadOdoAll() { try { return JSON.parse(localStorage.getItem(ODO_KEY) || '{}'); } catch { return {}; } }
     function saveOdoAll(all) { localStorage.setItem(ODO_KEY, JSON.stringify(all)); }
+
+    function loadChecksAll(){ try { return JSON.parse(localStorage.getItem(CHECKS_KEY)||'{}'); } catch { return {}; } }
+    function saveChecksAll(all){ localStorage.setItem(CHECKS_KEY, JSON.stringify(all)); }
+
     function calcDistance(a,b){
       if (a===''||b==='') return '';
       const na=Number(a), nb=Number(b);
@@ -348,9 +354,6 @@
       document.getElementById('odoC').value=calcDistance(a,b);
     }
 
-    const CHECKS_KEY='nippoDailyChecksV1';
-    function loadChecksAll(){ try { return JSON.parse(localStorage.getItem(CHECKS_KEY)||'{}'); } catch { return {}; } }
-    function saveChecksAll(all){ localStorage.setItem(CHECKS_KEY, JSON.stringify(all)); }
     function setChecksUI(state){
       document.getElementById('chkCarDaily').checked=!!state?.carDaily;
       document.getElementById('chkAlcohol').checked=!!state?.alcohol;
@@ -359,6 +362,7 @@
       const all=loadChecksAll();
       const state = all[dateKey] ?? { carDaily: true, alcohol: true };
       setChecksUI(state);
+      // 未保存なら初期値を保存しておく（デフォルトON維持）
       if (!(dateKey in all)) { all[dateKey]=state; saveChecksAll(all); }
     }
     function saveChecksForDate(dateKey){
@@ -443,25 +447,89 @@
       URL.revokeObjectURL(url);
     }
 
-    function isValidAllDataShape(all){
-      if(typeof all!=='object'||all===null||Array.isArray(all)) return false;
-      for(const [dateKey,rows] of Object.entries(all)){
-        if(!/^\d{4}-\d{2}-\d{2}$/.test(dateKey)) return false;
-        if(!Array.isArray(rows)) return false;
-        for(const r of rows){
-          if(typeof r!=='object'||r===null) return false;
-          const hasNew=('start' in r)||('end' in r);
-          const hasOld=('datetime' in r);
-          if(!hasNew && !hasOld) return false;
-          if(hasOld && typeof r.datetime!=='string') return false;
-          if('start' in r && typeof r.start!=='string') return false;
-          if('end' in r && typeof r.end!=='string') return false;
-          if(typeof r.location!=='string') return false;
-          if(typeof r.status!=='string') return false;
-          if(typeof r.memo!=='string') return false;
+    // =========================================================
+    // ✅ JSONバックアップ/復元：記録 + 走行距離 + 日々チェック 対応
+    // - 新形式：{ version:2, records:{...}, odo:{...}, checks:{...} }
+    // - 旧形式：{ "YYYY-MM-DD":[{...}, ...], ... }（記録のみ）
+    // =========================================================
+
+    function isValidDateKey(s){ return /^\d{4}-\d{2}-\d{2}$/.test(String(s||'')); }
+
+    function isValidRecordsShape(records){
+      if (typeof records !== 'object' || records === null || Array.isArray(records)) return false;
+
+      for (const [dateKey, rows] of Object.entries(records)) {
+        if (!isValidDateKey(dateKey)) return false;
+        if (!Array.isArray(rows)) return false;
+
+        for (const r of rows) {
+          if (typeof r !== 'object' || r === null) return false;
+
+          const hasNew = ('start' in r) || ('end' in r);
+          const hasOld = ('datetime' in r);
+          if (!hasNew && !hasOld) return false;
+
+          if (hasOld && typeof r.datetime !== 'string') return false;
+          if ('start' in r && typeof r.start !== 'string') return false;
+          if ('end' in r && typeof r.end !== 'string') return false;
+
+          if (typeof r.location !== 'string') return false;
+          if (typeof r.status !== 'string') return false;
+          if (typeof r.memo !== 'string') return false;
         }
       }
       return true;
+    }
+
+    function isValidOdoShape(odo){
+      if (typeof odo !== 'object' || odo === null || Array.isArray(odo)) return false;
+      for (const [dateKey, v] of Object.entries(odo)) {
+        if (!isValidDateKey(dateKey)) return false;
+        if (typeof v !== 'object' || v === null || Array.isArray(v)) return false;
+        // a/b は文字列想定（空OK）
+        if (!('a' in v) || !('b' in v)) return false;
+        if (typeof v.a !== 'string') return false;
+        if (typeof v.b !== 'string') return false;
+      }
+      return true;
+    }
+
+    function isValidChecksShape(checks){
+      if (typeof checks !== 'object' || checks === null || Array.isArray(checks)) return false;
+      for (const [dateKey, v] of Object.entries(checks)) {
+        if (!isValidDateKey(dateKey)) return false;
+        if (typeof v !== 'object' || v === null || Array.isArray(v)) return false;
+        if (!('carDaily' in v) || !('alcohol' in v)) return false;
+        if (typeof v.carDaily !== 'boolean') return false;
+        if (typeof v.alcohol !== 'boolean') return false;
+      }
+      return true;
+    }
+
+    function detectBackupFormat(parsed){
+      // 新形式
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        if (parsed.version === 2 && ('records' in parsed)) return 'v2';
+        // 将来の拡張も見越して version が数値で records/odo/checksがあるなら v2扱い
+        if (('records' in parsed) && ('odo' in parsed) && ('checks' in parsed)) return 'v2';
+      }
+      // 旧形式（records-only）
+      if (isValidRecordsShape(parsed)) return 'legacy_records_only';
+      return 'unknown';
+    }
+
+    function makeBackupV2(){
+      const records = loadAll();
+      const odo     = loadOdoAll();
+      const checks  = loadChecksAll();
+
+      return {
+        version: 2,
+        exportedAt: new Date().toISOString(),
+        records,
+        odo,
+        checks,
+      };
     }
 
     function getTodayLocalISO(){
@@ -493,7 +561,7 @@
     document.getElementById('startClearBtn').onclick=()=>{ document.getElementById('startTime').value=''; };
     document.getElementById('endClearBtn').onclick=()=>{ document.getElementById('endTime').value=''; };
 
-    // ✅ ここが「取得中のまま」修正の本丸：textContentを使わない
+    // 現在地取得
     document.getElementById('locBtn').onclick=()=>{
       const locEl=document.getElementById('location');
       locEl.value='位置情報を取得中…';
@@ -569,6 +637,7 @@
       }, { enableHighAccuracy:true, timeout:15000, maximumAge:0 });
     };
 
+    // 登録
     document.getElementById('addBtn').onclick=()=>{
       const dateKey=getSelectedDateKey();
       const start=document.getElementById('startTime').value.trim();
@@ -595,51 +664,137 @@
       clearTimes();
     };
 
-    document.getElementById('exportCsvBtn').onclick=()=>{
-      const dateKey=getSelectedDateKey();
+    // CSV出力
+    document.getElementById('exportCsvBtn').onclick = () => {
+      const selected = getSelectedDateKey();
+      if (!selected) {
+        alert('日付を選んでね');
+      return;
+      }
 
-      const all=loadAll();
-      const rows=(all[dateKey]||[]).map(normalizeRecord);
+      // 対象年月（YYYY-MM）
+      const ym = selected.slice(0, 7);
 
-      const odoAll=loadOdoAll();
-      const odo=odoAll[dateKey]||{a:'',b:''};
-      const odoC=calcDistance(String(odo.a??''), String(odo.b??''));
+      const recordsAll = loadAll();
+      const odoAll = loadOdoAll();
+      const checksAll = loadChecksAll();
 
-      const checksAll=loadChecksAll();
-      const checks=checksAll[dateKey]||{carDaily:false, alcohol:false};
+      // 対象月に存在する日付キーを収集（records/odo/checksのいずれかにある日だけ）
+      const dateSet = new Set();
 
-      if(rows.length===0 && (String(odo.a??'')==='' && String(odo.b??'')==='') && !checks.carDaily && !checks.alcohol){
-        alert('この日の記録がありません（走行距離・チェックも未入力）');
+      for (const k of Object.keys(recordsAll || {})) if (k.startsWith(ym + '-')) dateSet.add(k);
+      for (const k of Object.keys(odoAll || {}))     if (k.startsWith(ym + '-')) dateSet.add(k);
+      for (const k of Object.keys(checksAll || {}))  if (k.startsWith(ym + '-')) dateSet.add(k);
+
+      // もし全部空なら、分かりやすく終了
+      if (dateSet.size === 0) {
+        alert('この月の記録がありません');
+      return;
+      }
+
+      const dates = Array.from(dateSet).sort(); // 昇順
+
+      // その月の「最大記録件数」を数える（ヘッダ列数決定）
+      let maxRecs = 0;
+      for (const dk of dates) {
+        const rows = (recordsAll[dk] || []).map(normalizeRecord);
+      if (rows.length > maxRecs) maxRecs = rows.length;
+      }
+
+      // ヘッダ作成
+      const header = [
+        '年月日',
+        '車の日次点検',
+        'アルコールチェック',
+        '出勤時のメーター(km)',
+        '退勤時のメーター(km)',
+        '当日の走行距離',
+      ];
+
+      for (let i = 1; i <= maxRecs; i++) {
+        header.push(
+        `記録${i}_開始時刻`,
+        `記録${i}_終了時刻`,
+        `記録${i}_場所`,
+        `記録${i}_状態`,
+        `記録${i}_メモ`
+        );
+      }
+
+      const lines = [];
+      lines.push(header.map(escapeCsvCell).join(','));
+
+      // 行データ作成（1日=1行）
+      for (const dk of dates) {
+        const checks = checksAll[dk] || { carDaily: false, alcohol: false };
+        const carDailyStr = checks.carDaily ? '済' : '';
+        const alcoholStr = checks.alcohol ? '済' : '';
+
+        const odo = odoAll[dk] || { a: '', b: '' };
+        const a = String(odo.a ?? '');
+        const b = String(odo.b ?? '');
+        const c = calcDistance(a, b);
+
+        const rows = (recordsAll[dk] || []).map(normalizeRecord);
+
+        const rowCols = [
+          dk,
+          carDailyStr,
+          alcoholStr,
+          a,
+          b,
+          c,
+        ];
+
+        // 記録（最大件数まで横展開。足りない分は空欄で埋める）
+        for (let i = 0; i < maxRecs; i++) {
+          const r = rows[i];
+          if (r) {
+            rowCols.push(
+            r.start ?? '',
+            r.end ?? '',
+            r.location ?? '',
+            r.status ?? '',
+            r.memo ?? ''
+          );
+          } else {
+          rowCols.push('', '', '', '', '');
+          }
+        }
+
+        lines.push(rowCols.map(escapeCsvCell).join(','));
+      }
+
+        const csvText = lines.join('\n');
+        const filename = `nippo_${ym.replace('-', '')}.csv`; // nippo_202601.csv みたいになる
+        downloadText(filename, csvText, 'text/csv', true);
+    };
+
+
+
+
+    // ✅ JSON出力（全データ：記録 + 走行距離 + 日々チェック）
+    document.getElementById('exportJsonBtn').onclick=()=>{
+      const records = loadAll();
+      const odo     = loadOdoAll();
+      const checks  = loadChecksAll();
+
+      const hasAny =
+        (records && Object.keys(records).length > 0) ||
+        (odo && Object.keys(odo).length > 0) ||
+        (checks && Object.keys(checks).length > 0);
+
+      if(!hasAny){
+        alert('保存されているデータがありません');
         return;
       }
 
-      const metaLines=[
-        ['日付', dateKey],
-        ['走行距離A（出勤メーターkm）', odo.a ?? ''],
-        ['走行距離B（退勤メーターkm）', odo.b ?? ''],
-        ['走行距離C（本日の走行距離km）', odoC],
-        ['社用車の日次点検を実施済', checks.carDaily ? '1' : '0'],
-        ['アルコールチェックを実施済', checks.alcohol ? '1' : '0'],
-        [],
-      ].map(cols => (cols.length ? cols.map(escapeCsvCell).join(',') : ''));
-
-      const header=['開始','終了','場所','状態','メモ'];
-      const lines=[header.map(escapeCsvCell).join(',')];
-      for(const r of rows){
-        lines.push([r.start, r.end, r.location, r.status, r.memo].map(escapeCsvCell).join(','));
-      }
-
-      const csvText = metaLines.join('\n') + '\n' + lines.join('\n');
-      downloadText(`nippo_${dateKey.replaceAll('-', '')}.csv`, csvText, 'text/csv', true);
-    };
-
-    document.getElementById('exportJsonBtn').onclick=()=>{
-      const all=loadAll();
-      if(!all || Object.keys(all).length===0){ alert('保存されているデータがありません'); return; }
+      const backup = makeBackupV2();
       const stamp=new Date().toISOString().slice(0,19).replace(/[-:T]/g,'');
-      downloadText(`nippo_backup_${stamp}.json`, JSON.stringify(all,null,2), 'application/json', false);
+      downloadText(`nippo_backup_${stamp}.json`, JSON.stringify(backup,null,2), 'application/json', false);
     };
 
+    // ✅ JSON復元（新形式v2 / 旧形式（記録のみ） 両対応）
     document.getElementById('importJsonBtn').onclick=async ()=>{
       const fileInput=document.getElementById('importJsonFile');
       const file=fileInput.files && fileInput.files[0];
@@ -652,15 +807,52 @@
         const text=await file.text();
         const parsed=JSON.parse(text);
 
-        if(!isValidAllDataShape(parsed)){
+        const fmt = detectBackupFormat(parsed);
+
+        if (fmt === 'v2') {
+          const records = parsed.records ?? {};
+          const odo     = parsed.odo ?? {};
+          const checks  = parsed.checks ?? {};
+
+          if (!isValidRecordsShape(records)) {
+            alert('復元に失敗：records（記録）の形式が違うみたい。');
+            return;
+          }
+          if (!isValidOdoShape(odo)) {
+            alert('復元に失敗：odo（走行距離）の形式が違うみたい。');
+            return;
+          }
+          if (!isValidChecksShape(checks)) {
+            alert('復元に失敗：checks（日々チェック）の形式が違うみたい。');
+            return;
+          }
+
+          // 上書き復元
+          saveAll(records);
+          saveOdoAll(odo);
+          saveChecksAll(checks);
+
+        } else if (fmt === 'legacy_records_only') {
+          // 旧形式は「記録のみ」上書き復元（odo/checksは消さない）
+          saveAll(parsed);
+
+        } else {
           alert('このJSONは形式が違うみたい。日報アプリが出力したJSONを選んでね。');
           return;
         }
 
-        saveAll(parsed);
-        renderForDate(getSelectedDateKey());
+        // 画面反映
+        const dk = getSelectedDateKey();
+        renderForDate(dk);
+        loadOdoForDate(dk);
+        loadChecksForDate(dk);
+
         fileInput.value='';
-        alert('復元が完了したよ');
+        alert(fmt === 'legacy_records_only'
+          ? '復元が完了したよ（旧形式：記録のみ復元）'
+          : '復元が完了したよ（記録・走行距離・日々チェック）'
+        );
+
       }catch(e){
         alert(`復元に失敗：${e?.message || e}`);
       }
@@ -754,7 +946,6 @@
         localStorage.removeItem(ODO_KEY);
         localStorage.removeItem(CHECKS_KEY);
 
-        // ✅ inputなのでvalueで消す
         const locEl=document.getElementById('location');
         if(locEl) locEl.value='';
 
@@ -763,7 +954,8 @@
 
         clearTimes();
 
-        renderForDate(getSelectedDateKey());
+        const dk = getSelectedDateKey();
+        renderForDate(dk);
         setOdoUI('', '');
         setChecksUI({ carDaily: false, alcohol: false });
 
