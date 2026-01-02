@@ -679,8 +679,11 @@
     }
 
     // ===== 起動時設定 =====
-    const today = new Date().toISOString().slice(0, 10);
+    //const today = new Date().toISOString().slice(0, 10);
+    const today = getTodayLocalISO();
     document.getElementById('date').value = today;
+
+    
 
     function onDateChanged() {
       const dateKey = getSelectedDateKey();
@@ -692,6 +695,13 @@
 
       clearTimes();
     }
+
+    function getTodayLocalISO() {
+      const d = new Date();
+      d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); // ローカル→ISOズレ補正
+      return d.toISOString().slice(0, 10);
+    }
+
 
     document.getElementById('date').addEventListener('change', onDateChanged);
 
